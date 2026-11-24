@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>服装流程管理系统 · 框架原型</title>
+<style>
+  /* ============ 基础与变量 ============ */
+  :root{
+    --bg:#f4f6f8; --panel:#ffffff; --line:#e6eaef; --text:#1f2733; --text-sub:#6b7684;
+    --primary:#1f4e79; --primary-soft:#e8f0f8;
+    --green:#2e9e6b; --green-soft:#e7f5ee;
+    --blue:#2f7fc4; --blue-soft:#e8f2fb;
+    --orange:#e8912d; --orange-soft:#fdf2e3;
+    --red:#d9534f; --red-soft:#fbeaea;
+    --gray:#9aa4b0; --gray-soft:#eef1f4;
+    --radius:10px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Segoe UI",sans-serif;background:var(--bg);color:var(--text);font-size:14px;}
+  .app{display:flex;min-height:100vh;}
+
+  /* ============ 侧边导航 ============ */
+  .sidebar{width:220px;background:#16324f;color:#dbe6f0;flex-shrink:0;display:flex;flex-direction:column;}
+  .sidebar .logo{padding:20px 18px;font-size:16px;font-weight:700;color:#fff;border-bottom:1px solid rgba(255,255,255,.1);}
+  .sidebar .logo span{display:block;font-size:11px;font-weight:400;color:#9fb6cc;margin-top:4px;}
+  .nav{padding:12px 10px;display:flex;flex-direction:column;gap:2px;}
+  .nav-item{padding:10px 12px;border-radius:8px;cursor:pointer;color:#c4d3e1;display:flex;align-items:center;gap:10px;font-size:14px;}
+  .nav-item .ico{width:18px;text-align:center;}
+  .nav-item:hover{background:rgba(255,255,255,.08);}
+  .nav-item.active{background:var(--primary);color:#fff;}
+  .nav-group{padding:14px 12px 6px;font-size:11px;color:#7e99b2;letter-spacing:1px;}
+
+  /* ============ 主区域 ============ */
+  .main{flex:1;display:flex;flex-direction:column;min-width:0;}
+  .topbar{background:var(--panel);border-bottom:1px solid var(--line);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;}
+  .topbar .title{font-size:17px;font-weight:700;}
+  .topbar .sub{font-size:12px;color:var(--text-sub);margin-top:2px;}
+  .topbar .right{display:flex;align-items:center;gap:14px;}
+  .avatar{width:34px;height:34px;border-radius:50%;background:var(--primary-soft);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:600;}
+  .content{padding:24px;display:flex;flex-direction:column;gap:20px;}
+
+  /* ============ KPI / 模块小统计 ============ */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;}
+  #view-overview .kpis{margin-bottom:24px;}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px;}
+  .kpi .num{font-size:26px;font-weight:700;}
+  .kpi .label{color:var(--text-sub);font-size:13px;margin-top:4px;}
+  .kpi .trend{font-size:12px;margin-top:8px;color:var(--text-sub);}
+  .kpi.c-blue .num{color:var(--blue);} .kpi.c-orange .num{color:var(--orange);}
+  .kpi.c-green .num{color:var(--green);} .kpi.c-red .num{color:var(--red);} .kpi.c-gray .num{color:var(--gray);}
+
+  .mini-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+  .mini{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;display:flex;justify-content:space-between;align-items:center;}
+  .mini .num{font-size:22px;font-weight:700;}
+  .mini .label{font-size:13px;color:var(--text-sub);margin-top:2px;}
+
+  /* ============ 面板 ============ */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px;overflow-x:auto;}
+  .panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap;}
+  .panel-head h3{font-size:15px;}
+  .result-count{font-size:12px;color:var(--text-sub);}
+
+  /* ============ 筛选栏 ============ */
+  .filter-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;}
+  .search{border:1px solid var(--line);border-radius:8px;padding:8px 12px;width:220px;font-size:13px;color:var(--text-sub);background:var(--panel);}
+  .select{border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px;background:var(--panel);color:var(--text);cursor:pointer;}
+  .filters{display:flex;gap:10px;align-items:center;}
+  .btn{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer;}
+  .btn.primary{background:var(--primary);color:#fff;border-color:var(--primary);}
+  .legend{display:flex;gap:14px;font-size:12px;color:var(--text-sub);margin-left:auto;}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;}
+
+  /* ============ 表格 ============ */
+  table{width:100%;min-width:1080px;border-collapse:collapse;}
+  thead th{text-align:left;font-size:12px;color:var(--text-sub);font-weight:600;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  tbody td{padding:14px 12px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  tbody tr.clickable{cursor:pointer;}
+  tbody tr.clickable:hover{background:var(--primary-soft);}
+  .style-no{font-weight:600;}
+  .style-link{color:var(--blue);cursor:pointer;text-decoration:underline;text-underline-offset:3px;font-weight:600;}
+  .style-link:hover{color:var(--primary);}
+  .style-name{color:var(--text-sub);font-size:12px;margin-top:2px;}
+  .thumb{width:44px;height:56px;border-radius:6px;background:var(--gray-soft);display:flex;align-items:center;justify-content:center;color:var(--gray);font-size:11px;}
+  .cell-style{display:flex;gap:10px;align-items:center;}
+
+  .tag{display:inline-flex;align-items:center;padding:4px 10px;border-radius:20px;font-size:12px;white-space:nowrap;}
+  .tag.done{background:var(--green-soft);color:var(--green);}
+  .tag.doing{background:var(--blue-soft);color:var(--blue);}
+  .tag.todo{background:var(--gray-soft);color:var(--gray);}
+  .tag.block{background:var(--red-soft);color:var(--red);}
+  .tag.review{background:var(--orange-soft);color:var(--orange);}
+
+  /* 节点状态点 */
+  .node-dot{display:inline-flex;width:20px;height:20px;border-radius:50%;align-items:center;justify-content:center;font-size:11px;}
+  .node-dot.done{background:var(--green-soft);color:var(--green);}
+  .node-dot.doing{background:var(--blue-soft);color:var(--blue);}
+  .node-dot.todo{background:var(--gray-soft);color:var(--gray);}
+  .node-dot.block{background:var(--red-soft);color:var(--red);}
+  .nodes{display:flex;gap:8px;}
+
+  .progress{width:120px;}
+  .progress .bar{height:6px;border-radius:4px;background:var(--gray-soft);overflow:hidden;}
+  .progress .fill{height:100%;border-radius:4px;background:var(--blue);}
+  .progress .pct{font-size:12px;color:var(--text-sub);margin-top:4px;}
+  .avatar-sm{width:26px;height:26px;border-radius:50%;background:var(--primary-soft);color:var(--primary);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;}
+  .user-wrap{position:relative;}
+  .user-wrap .avatar{cursor:pointer;}
+  .user-menu{position:absolute;top:calc(100% + 10px);right:0;width:240px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 12px 32px rgba(0,0,0,.16);padding:16px;z-index:50;}
+  .user-menu-head{display:flex;gap:12px;align-items:center;margin-bottom:12px;}
+  .um-name{font-weight:600;font-size:14px;}
+  .um-account{font-size:12px;color:var(--text-sub);margin-top:2px;}
+  .um-meta{font-size:12px;color:var(--text-sub);padding:7px 0;border-top:1px dashed var(--line);}
+  .um-meta b{color:var(--text);}
+  .um-logout{width:100%;margin-top:12px;justify-content:center;}
+  .empty{padding:40px;text-align:center;color:var(--text-sub);}
+
+  .placeholder-view{background:var(--panel);border:1px dashed var(--line);border-radius:var(--radius);padding:60px 24px;text-align:center;color:var(--text-sub);}
+  .placeholder-view h3{margin-bottom:8px;color:var(--text);}
+
+  /* ============ 详情抽屉 ============ */
+  .drawer-mask{position:fixed;inset:0;background:rgba(20,35,50,.35);opacity:0;pointer-events:none;transition:opacity .2s;z-index:20;}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:460px;background:var(--panel);box-shadow:-6px 0 24px rgba(0,0,0,.12);transform:translateX(100%);transition:transform .25s;z-index:21;display:flex;flex-direction:column;}
+  .drawer.open{transform:translateX(0);}
+  .drawer-mask.open{opacity:1;pointer-events:auto;}
+  .drawer-head{padding:20px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start;}
+  .drawer-head .style-no{font-size:17px;}
+  .drawer-head .style-name{margin-top:4px;}
+  .drawer-body{padding:20px 22px;overflow-y:auto;flex:1;}
+  .drawer-foot{padding:16px 22px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;}
+  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;margin-bottom:24px;}
+  .detail-grid .item .k{font-size:12px;color:var(--text-sub);margin-bottom:4px;}
+  .detail-grid .item .v{font-size:14px;font-weight:500;}
+  .timeline-group{margin-bottom:22px;}
+  .timeline-group h4{font-size:13px;margin-bottom:12px;color:var(--primary);}
+  .tl{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:13px;}
+  .tl:last-child{border-bottom:none;}
+  .tl .name{flex:1;}
+  .tl.editable{cursor:pointer;border-radius:8px;}
+  .tl.editable:hover{background:var(--primary-soft);}
+  .tl .node-date{width:92px;font-size:12px;color:var(--muted);text-align:right;}
+  .tl .style-name{width:60px;text-align:right;margin-top:0;}
+  .node-date{font-size:12px;color:var(--text-sub);width:86px;flex-shrink:0;}
+
+  /* ============ 关联款式弹窗 ============ */
+  .modal-mask{position:fixed;inset:0;background:rgba(20,35,50,.35);opacity:0;pointer-events:none;transition:opacity .2s;z-index:30;}
+  .modal-mask.open{opacity:1;pointer-events:auto;}
+  .modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-45%);width:440px;max-width:90vw;background:var(--panel);border-radius:var(--radius);box-shadow:0 12px 32px rgba(0,0,0,.18);z-index:31;opacity:0;pointer-events:none;transition:all .2s;}
+  .modal.open{opacity:1;pointer-events:auto;transform:translate(-50%,-50%);}
+  .modal-head{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;}
+  .modal-head h3{font-size:15px;}
+  .modal-body{padding:12px 20px 18px;max-height:360px;overflow-y:auto;}
+  .rel-row{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px dashed var(--line);cursor:pointer;}
+  .rel-row:last-child{border-bottom:none;}
+  .rel-row:hover{background:var(--primary-soft);}
+  .rel-row .info{flex:1;}
+  .rel-row .name{color:var(--text-sub);font-size:12px;margin-top:2px;}
+
+  /* ============ 表单 / 确认弹窗 ============ */
+  .modal-foot{padding:16px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px;}
+  .form-field{display:flex;flex-direction:column;gap:6px;}
+  .form-field.full{grid-column:1 / -1;}
+  .form-field label{font-size:12px;color:var(--text-sub);}
+  .form-field input,.form-field select,.form-field textarea{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--panel);color:var(--text);font-family:inherit;}
+  .form-field input:disabled,.form-field select:disabled,.form-field textarea:disabled{background:var(--gray-soft);color:var(--text-sub);cursor:not-allowed;}
+  .form-field textarea{resize:vertical;min-height:64px;}
+  .check-group{display:flex;flex-wrap:wrap;gap:10px 16px;padding:6px 0;}
+  .check-group label{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;}
+  .check-group input{accent-color:var(--primary);}
+
+  /* 可搜索多选下拉 */
+  .combo{position:relative;}
+  .combo-box{border:1px solid var(--line);border-radius:8px;padding:6px 8px;min-height:38px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;cursor:text;}
+  .combo-box input{border:none;outline:none;flex:1;min-width:120px;font-size:13px;padding:4px;background:transparent;color:var(--text);}
+  .combo-tag{display:inline-flex;align-items:center;gap:5px;background:var(--primary-soft);color:var(--primary);border-radius:6px;padding:3px 8px;font-size:12px;}
+  .combo-tag .x{cursor:pointer;font-weight:700;line-height:1;}
+  .combo-panel{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 20px rgba(0,0,0,.12);z-index:40;max-height:180px;overflow-y:auto;padding:6px;}
+  .combo-option{padding:7px 8px;border-radius:6px;}
+  .combo-option:hover{background:var(--primary-soft);}
+  .combo-option label{display:flex;gap:8px;align-items:center;font-size:13px;cursor:pointer;}
+  .combo-option input{accent-color:var(--primary);}
+  .combo-option.hide{display:none;}
+  .btn.danger{color:var(--red);border-color:var(--red-soft);}
+  .op-btns{display:flex;gap:6px;}
+  .op-btns .btn{padding:5px 10px;font-size:12px;}
+  .pwd-row{display:flex;gap:8px;align-items:center;}
+  .pwd-row input{flex:1;}
+  .pwd-row .btn{padding:7px 10px;font-size:12px;white-space:nowrap;}
+
+  /* ============ 报表图表（纯 CSS） ============ */
+  .chart-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px;}
+  .chart-box{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px;}
+  .chart-box h3{font-size:14px;margin-bottom:16px;}
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:13px;}
+  .bar-row .lbl{width:78px;flex-shrink:0;color:var(--text-sub);}
+  .bar-row .track{flex:1;height:18px;background:var(--gray-soft);border-radius:6px;overflow:hidden;}
+  .bar-row .fill{height:100%;border-radius:6px;}
+  .bar-row .val{width:52px;text-align:right;font-weight:600;flex-shrink:0;}
+  .legend-dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;}
+
+  /* ============ 权限管理 ============ */
+  .perm-tabs{display:flex;gap:10px;margin-bottom:16px;}
+  .perm-tab{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--text-sub);}
+  .perm-tab.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+  .role-card{border:1px solid var(--line);border-radius:var(--radius);padding:18px;margin-bottom:16px;}
+  .role-card .role-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .role-card .role-name{font-weight:700;font-size:15px;}
+  .perm-checks{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 18px;margin:10px 0;}
+  .perm-checks label{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;}
+  .perm-checks input{accent-color:var(--primary);}
+  .perm-meta{display:flex;gap:24px;font-size:13px;color:var(--text-sub);margin-top:10px;}
+  .perm-meta b{color:var(--text);}
+  .form-inline{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .role-select{border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px;background:var(--panel);color:var(--text);cursor:pointer;}
+
+  /* ============ 登录页 ============ */
+  #loginPage{position:fixed;inset:0;background:linear-gradient(135deg,#16324f 0%,#1f4e79 100%);display:flex;align-items:center;justify-content:center;z-index:100;}
+  .login-card{background:var(--panel);border-radius:14px;padding:36px 32px;width:360px;box-shadow:0 20px 50px rgba(0,0,0,.25);}
+  .login-logo{font-size:18px;font-weight:700;color:var(--primary);text-align:center;margin-bottom:24px;}
+  .login-logo span{display:block;font-size:11px;color:var(--text-sub);font-weight:400;margin-top:4px;}
+  .login-field{margin-bottom:16px;}
+  .login-field label{font-size:12px;color:var(--text-sub);display:block;margin-bottom:6px;}
+  .login-field input{width:100%;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px;font-family:inherit;}
+  .login-field input:focus{outline:none;border-color:var(--primary);}
+  .login-error{color:var(--red);font-size:12px;min-height:16px;margin-bottom:8px;}
+  .login-btn{width:100%;padding:11px;font-size:15px;justify-content:center;}
+</style>
+</head>
+<body>
+<!-- ======== 登录入口 ======== -->
+<div id="loginPage">
+  <div class="login-card">
+    <div class="login-logo">服装流程管理系统<span>R&D · Design · Production</span></div>
+    <div class="login-field">
+      <label>账号</label>
+      <input id="loginAccount" placeholder="请输入账号" autocomplete="username">
+    </div>
+    <div class="login-field">
+      <label>密码</label>
+      <input type="password" id="loginPassword" placeholder="请输入密码" autocomplete="current-password">
+    </div>
+    <div class="login-error" id="loginError"></div>
+    <button class="btn primary login-btn" id="btnLogin">登 录</button>
+  </div>
+</div>
+
+<div class="app" id="appRoot" style="display:none">
+
+  <!-- ======== 侧边导航 ======== -->
+  <aside class="sidebar">
+    <div class="logo">服装流程管理系统<span>R&D · Design · Production</span></div>
+    <nav class="nav">
+      <div class="nav-group">主导航</div>
+      <div class="nav-item active" data-view="overview"><span class="ico">▦</span>总览看板</div>
+      <div class="nav-item" data-view="rd"><span class="ico">🔬</span>研发管理</div>
+      <div class="nav-item" data-view="design"><span class="ico">✎</span>设计管理</div>
+      <div class="nav-item" data-view="prod"><span class="ico">🏭</span>生产管理</div>
+      <div class="nav-group">辅助模块</div>
+      <div class="nav-item" data-view="material"><span class="ico">🧵</span>物料 / 样衣库</div>
+      <div class="nav-item" data-view="supplier"><span class="ico">🚚</span>供应商管理</div>
+      <div class="nav-item" data-view="report"><span class="ico">📊</span>数据报表</div>
+      <div class="nav-group">系统管理</div>
+      <div class="nav-item" data-view="permission"><span class="ico">🛡</span>权限管理</div>
+    </nav>
+  </aside>
+
+  <!-- ======== 主区域 ======== -->
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="title" id="pageTitle">总览看板</div>
+        <div class="sub">查看各款式在研发、设计、生产环节的进度与状态（框架原型 · 示例数据）</div>
+      </div>
+      <div class="right">
+        <div class="form-inline">
+          <span style="font-size:13px;color:var(--text-sub)">模拟角色</span>
+          <select class="role-select" id="roleSelect">
+            <option value="admin">超级管理员</option>
+            <option value="rd">研发企划</option>
+            <option value="designer">设计师</option>
+            <option value="merch">生产跟单</option>
+            <option value="viewer">只读查看</option>
+          </select>
+        </div>
+        <div class="user-wrap" id="userWrap">
+          <div class="avatar" id="topAvatar" title="点击查看用户信息">管</div>
+          <div class="user-menu" id="userMenu" hidden>
+            <div class="user-menu-head">
+              <div class="avatar" id="umAvatar">管</div>
+              <div>
+                <div class="um-name" id="umName"></div>
+                <div class="um-account" id="umAccount"></div>
+              </div>
+            </div>
+            <div class="um-meta" id="umRole"></div>
+            <div class="um-meta" id="umScope"></div>
+            <button class="btn danger um-logout" id="btnLogout">退出登录</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ===== 总览看板 ===== -->
+      <div id="view-overview">
+        <div class="kpis">
+          <div class="kpi c-blue"><div class="num" id="kpiRd">0</div><div class="label">研发中</div><div class="trend">立项 ~ 样衣评审</div></div>
+          <div class="kpi c-orange"><div class="num" id="kpiDs">0</div><div class="label">设计中</div><div class="trend">设计稿 ~ 定稿</div></div>
+          <div class="kpi c-green"><div class="num" id="kpiPd">0</div><div class="label">生产中</div><div class="trend">采购 ~ 出货</div></div>
+          <div class="kpi c-gray"><div class="num" id="kpiDone">0</div><div class="label">已完成</div><div class="trend">本季累计</div></div>
+          <div class="kpi c-red"><div class="num" id="kpiBlock">0</div><div class="label">延期 / 阻塞</div><div class="trend" style="color:var(--red)">需重点跟进</div></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h3>款式进度明细</h3>
+            <div class="filters">
+              <span class="result-count" id="resultCount"></span>
+              <button class="btn primary" id="btnNewStyle">+ 新建款式</button>
+            </div>
+          </div>
+          <div class="filter-bar">
+            <input class="search" id="fKeyword" type="text" placeholder="搜索款号 / 品名 / 批次 / 供应商 / 负责人…">
+            <select class="select" id="fStage">
+              <option value="all">全部阶段</option>
+              <option value="rd">研发中</option>
+              <option value="design">设计中</option>
+              <option value="prod">生产中</option>
+              <option value="done">已完成</option>
+            </select>
+            <select class="select" id="fStatus">
+              <option value="all">全部状态</option>
+              <option value="doing">进行中</option>
+              <option value="review">待审核</option>
+              <option value="block">阻塞 / 延期</option>
+              <option value="done">已完成</option>
+            </select>
+            <select class="select" id="fSupplier"><option value="all">全部供应商</option></select>
+            <button class="btn" id="fReset">重置筛选</button>
+            <div class="legend">
+              <span><i style="background:var(--green)"></i>已完成</span>
+              <span><i style="background:var(--blue)"></i>进行中</span>
+              <span><i style="background:var(--orange)"></i>待审核</span>
+              <span><i style="background:var(--red)"></i>阻塞/延期</span>
+              <span><i style="background:var(--gray)"></i>未开始</span>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>款式</th><th>批次</th><th>数量</th><th>供应商</th><th>研发</th><th>设计</th><th>生产</th>
+                <th>当前环节</th><th>负责人</th><th>计划交期</th><th>整体进度</th><th>状态</th><th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="styleTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== 研发管理 ===== -->
+      <div id="view-rd" hidden>
+        <div class="mini-stats">
+          <div class="mini"><div><div class="num" id="rdCount">0</div><div class="label">在研款式</div></div></div>
+          <div class="mini"><div><div class="num" style="color:var(--orange)">0</div><div class="label">待样衣评审</div></div></div>
+          <div class="mini"><div><div class="num" style="color:var(--blue)">0</div><div class="label">打版 / 开发中</div></div></div>
+          <div class="mini"><div><div class="num" style="color:var(--green)">0</div><div class="label">已核价完成</div></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>研发款式列表</h3><span class="result-count" id="rdCountText"></span></div>
+          <table>
+            <thead>
+              <tr>
+                <th>款式</th><th>当前节点</th>
+                <th>立项企划</th><th>市场调研</th><th>面辅料开发</th><th>样衣打版</th><th>样衣评审</th><th>成本核价</th>
+                <th>负责人</th><th>成本</th><th>评审意见</th><th>进度</th>
+              </tr>
+            </thead>
+            <tbody id="rdTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== 设计管理 ===== -->
+      <div id="view-design" hidden>
+        <div class="mini-stats">
+          <div class="mini"><div><div class="num" id="dsCount">0</div><div class="label">在设计款式</div></div></div>
+          <div class="mini"><div><div class="num" style="color:var(--orange)">0</div><div class="label">待定稿</div></div></div>
+          <div class="mini"><div><div class="num" style="color:var(--blue)">0</div><div class="label">版型调整中</div></div></div>
+          <div class="mini"><div><div class="num" style="color:var(--green)">0</div><div class="label">已定稿</div></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>设计款式列表</h3><span class="result-count" id="dsCountText"></span></div>
+          <table>
+            <thead>
+              <tr>
+                <th>款式</th><th>当前节点</th>
+                <th>款式设计</th><th>图案配色</th><th>面辅料选配</th><th>版型确认</th><th>设计定稿</th>
+                <th>设计师</th><th>稿版本</th><th>进度</th>
+              </tr>
+            </thead>
+            <tbody id="dsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== 生产管理 ===== -->
+      <div id="view-prod" hidden>
+        <div class="mini-stats">
+          <div class="mini"><div><div class="num" id="pdCount">0</div><div class="label">在产工单</div></div></div>
+          <div class="mini"><div><div class="num" style="color:var(--orange)">0</div><div class="label">待物料 / 采购</div></div></div>
+          <div class="mini"><div><div class="num" style="color:var(--blue)">0</div><div class="label">车间缝制中</div></div></div>
+          <div class="mini"><div><div class="num" style="color:var(--red)">0</div><div class="label">阻塞 / 延期</div></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>生产工单列表</h3><span class="result-count" id="pdCountText"></span></div>
+          <table>
+            <thead>
+              <tr>
+                <th>款式</th><th>批次</th><th>数量</th><th>加工厂</th>
+                <th>物料采购</th><th>生产排期</th><th>裁剪</th><th>车缝</th><th>整烫</th><th>质检</th><th>包装入库</th><th>出货</th>
+                <th>交期</th><th>状态</th>
+              </tr>
+            </thead>
+            <tbody id="pdTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== 物料 / 样衣库 ===== -->
+      <div id="view-material" hidden>
+        <div class="perm-tabs">
+          <button class="perm-tab mat-tab active" data-mat="mat">面辅料档案</button>
+          <button class="perm-tab mat-tab" data-mat="sample">样衣档案</button>
+        </div>
+
+        <!-- 面辅料档案 -->
+        <div id="tab-mat">
+          <div class="panel">
+            <div class="panel-head">
+              <h3>面辅料档案</h3>
+              <div class="filters"><span class="result-count" id="matCount"></span><button class="btn primary" id="btnNewMaterial">+ 新增物料</button></div>
+            </div>
+            <div class="filter-bar">
+              <input class="search" id="matKw" placeholder="搜索编码 / 名称 / 色号 / 关联款号…">
+              <select class="select" id="matCat"><option value="all">全部分类</option></select>
+              <select class="select" id="matSupplier"><option value="all">全部供应商</option></select>
+            </div>
+            <table>
+              <thead>
+                <tr><th>物料编码</th><th>物料名称</th><th>分类</th><th>颜色 / 色号</th><th>成分</th><th>供应商</th><th>库存</th><th>关联款式</th><th>备注</th><th>操作</th></tr>
+              </thead>
+              <tbody id="matTbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 样衣档案 -->
+        <div id="tab-sample" hidden>
+          <div class="panel">
+            <div class="panel-head">
+              <h3>样衣档案</h3>
+              <div class="filters"><span class="result-count" id="spCount"></span><button class="btn primary" id="btnNewSample">+ 样衣登记</button></div>
+            </div>
+            <div class="filter-bar">
+              <input class="search" id="spKw" placeholder="搜索样衣编号 / 款号 / 存放位置…">
+              <select class="select" id="spType"><option value="all">全部类型</option></select>
+              <select class="select" id="spStatus"><option value="all">全部状态</option></select>
+            </div>
+            <table>
+              <thead>
+                <tr><th>样衣编号</th><th>关联款号</th><th>样衣类型</th><th>尺码</th><th>送样时间</th><th>接收人</th><th>存放位置</th><th>状态</th><th>备注</th><th>操作</th></tr>
+              </thead>
+              <tbody id="spTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <!-- ===== 供应商管理 ===== -->
+      <div id="view-supplier" hidden>
+        <div class="panel">
+          <div class="panel-head">
+            <h3>供应商档案</h3>
+            <div class="filters"><span class="result-count" id="supCount"></span><button class="btn primary" id="btnNewSupplier">+ 新增供应商</button></div>
+          </div>
+          <div class="filter-bar">
+            <input class="search" id="supKw" placeholder="搜索编码 / 名称 / 联系人 / 地区…">
+            <select class="select" id="supCat"><option value="all">全部类别</option></select>
+            <select class="select" id="supStatus"><option value="all">全部状态</option><option>合作中</option><option>待开发</option><option>已停用</option></select>
+          </div>
+          <table>
+            <thead>
+              <tr><th>供应商编码</th><th>供应商名称</th><th>类别</th><th>联系人</th><th>电话</th><th>地区</th><th>状态</th><th>备注</th><th>操作</th></tr>
+            </thead>
+            <tbody id="supTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== 数据报表 ===== -->
+      <div id="view-report" hidden>
+        <div class="panel">
+          <div class="panel-head">
+            <h3>经营统计报表</h3>
+            <div class="filters">
+              <button class="btn">导出 Excel</button>
+            </div>
+          </div>
+          <div class="filter-bar">
+            <select class="select" id="rptRange">
+              <option value="all">全部时间</option>
+              <option value="this">本季</option>
+              <option value="last">上季</option>
+            </select>
+            <select class="select" id="rptSupplier"><option value="all">全部供应商</option></select>
+            <span class="result-count" id="rptCount"></span>
+          </div>
+          <div class="chart-grid">
+            <div class="chart-box">
+              <h3>款式进度分布</h3>
+              <div id="chartStage"></div>
+            </div>
+            <div class="chart-box">
+              <h3>平均环节周期（天）</h3>
+              <div id="chartCycle"></div>
+            </div>
+            <div class="chart-box">
+              <h3>供应商交付情况</h3>
+              <div id="chartSupplier"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>延期 / 阻塞预警清单</h3><span class="result-count" id="delayCount"></span></div>
+          <table>
+            <thead>
+              <tr>
+                <th>款号</th><th>品名</th><th>批次</th><th>供应商</th><th>阻塞原因</th><th>负责人</th><th>计划交期</th><th>状态</th>
+              </tr>
+            </thead>
+            <tbody id="delayTbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== 权限管理（超管） ===== -->
+      <div id="view-permission" hidden>
+        <div class="perm-tabs">
+          <button class="perm-tab active" data-perm="user">用户管理</button>
+          <button class="perm-tab" data-perm="role">角色权限配置</button>
+        </div>
+
+        <div id="perm-user">
+          <div class="panel">
+            <div class="panel-head">
+              <h3>用户账号列表</h3>
+              <button class="btn primary" id="btnNewUser">+ 新增用户</button>
+            </div>
+            <table>
+              <thead>
+                <tr><th>账号</th><th>姓名</th><th>角色</th><th>手机号</th><th>数据范围</th><th>状态</th><th>操作</th></tr>
+              </thead>
+              <tbody id="userTbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="perm-role" hidden>
+          <div class="panel">
+            <div class="panel-head"><h3>角色与权限配置</h3><span class="result-count">勾选该角色可见菜单与可编辑环节（原型演示）</span></div>
+            <div id="roleList"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ======== 款式详情抽屉 ======== -->
+<div class="drawer-mask" id="drawerMask"></div>
+<aside class="drawer" id="drawer">
+  <div class="drawer-head">
+    <div>
+      <div class="style-no" id="dNo"></div>
+      <div class="style-name" id="dName"></div>
+    </div>
+    <button class="btn" id="drawerClose">×</button>
+  </div>
+  <div class="drawer-body">
+    <div class="detail-grid" id="dInfo"></div>
+    <div id="dTimeline"></div>
+  </div>
+  <div class="drawer-foot" id="drawerFoot">
+    <button class="btn primary" id="btnEditStyle">编辑本款</button>
+    <button class="btn">导出进度</button>
+  </div>
+</aside>
+
+<!-- ======== 关联款式弹窗 ======== -->
+<div class="modal-mask" id="relMask"></div>
+<aside class="modal" id="relModal">
+  <div class="modal-head">
+    <h3 id="relTitle">关联款式</h3>
+    <button class="btn" id="relClose">×</button>
+  </div>
+  <div class="modal-body" id="relList"></div>
+</aside>
+
+<!-- ======== 通用表单弹窗 ======== -->
+<div class="modal-mask" id="formMask"></div>
+<aside class="modal" id="formModal">
+  <div class="modal-head">
+    <h3 id="formTitle">编辑</h3>
+    <button class="btn" id="formClose">×</button>
+  </div>
+  <div class="modal-body"><div class="form-grid" id="formBody"></div></div>
+  <div class="modal-foot">
+    <button class="btn" id="formCancel">取消</button>
+    <button class="btn primary" id="formSave">保存</button>
+  </div>
+</aside>
+
+<!-- ======== 删除确认弹窗 ======== -->
+<div class="modal-mask" id="confirmMask"></div>
+<aside class="modal" id="confirmModal" style="width:380px">
+  <div class="modal-head"><h3 id="confirmTitle">确认删除</h3></div>
+  <div class="modal-body" id="confirmText" style="font-size:13px;line-height:1.7;"></div>
+  <div class="modal-foot">
+    <button class="btn" id="confirmNo">取消</button>
+    <button class="btn danger" id="confirmYes">确认删除</button>
+  </div>
+</aside>
+
+<!-- ======== 环节节点编辑弹窗 ======== -->
+<div class="modal-mask" id="nodeMask"></div>
+<aside class="modal" id="nodeModal" style="width:380px">
+  <div class="modal-head">
+    <h3 id="nodeTitle">环节进度</h3>
+    <button class="btn" id="nodeClose">×</button>
+  </div>
+  <div class="modal-body">
+    <div class="form-grid" style="grid-template-columns:1fr">
+      <div class="form-field">
+        <label>环节状态</label>
+        <select id="nodeStatus">
+          <option value="todo">未开始</option>
+          <option value="doing">进行中</option>
+          <option value="done">已完成</option>
+          <option value="block">阻塞 / 延期</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>完成日期（已完成时必填）</label>
+        <input type="date" id="nodeDate">
+      </div>
+    </div>
+  </div>
+  <div class="modal-foot">
+    <button class="btn" id="nodeCancel">取消</button>
+    <button class="btn primary" id="nodeSave">保存</button>
+  </div>
+</aside>
+
+<script>
+/* ============ 节点定义 ============ */
+const RD_NODES   = ['立项企划','市场调研','面辅料开发','样衣打版','样衣评审','成本核价'];
+const DS_NODES   = ['款式设计','图案配色','面辅料选配','版型确认','设计定稿'];
+const PD_NODES   = ['物料采购','生产排期','裁剪','车缝','整烫','质检','包装入库','出货'];
+
+/* st: done / doing / todo / block */
+const ST_LABEL = {done:'已完成', doing:'进行中', todo:'未开始', block:'阻塞'};
+
+/* ============ 角色权限配置（原型模拟，正式环境以后端鉴权为准） ============ */
+const roleConfig = {
+  admin:    { name:'超级管理员', pages:['overview','rd','design','prod','material','supplier','report','permission'], scope:'全部款式', edit:'all',    avatar:'管' },
+  rd:       { name:'研发企划',   pages:['overview','rd','material','supplier'],                         scope:'自己负责的款式', edit:'rd',     avatar:'研' },
+  designer: { name:'设计师',     pages:['overview','design','material','supplier'],                      scope:'自己负责的款式', edit:'design', avatar:'设' },
+  merch:    { name:'生产跟单',   pages:['overview','prod','material','supplier'],                        scope:'自己跟进的工单', edit:'prod',   avatar:'跟' },
+  viewer:   { name:'只读查看',   pages:['overview','report'],                                  scope:'全部款式（只读）', edit:'none',  avatar:'阅' }
+};
+let currentRole = 'admin';
+
+const users = [
+  { account:'admin01',    name:'管理员',   role:'admin',    phone:'138****0000', status:'启用', password:'admin01' },
+  { account:'li.yan',    name:'李研',     role:'rd',       phone:'139****1234', status:'启用', password:'123456' },
+  { account:'su.design', name:'苏设计',   role:'designer', phone:'137****5678', status:'启用', password:'123456' },
+  { account:'chen.merch',name:'陈跟单',   role:'merch',    phone:'136****9012', status:'启用', password:'123456' },
+  { account:'boss',      name:'王总',     role:'viewer',   phone:'135****3456', status:'禁用', password:'123456' }
+];
+
+const PAGE_NAMES = {overview:'总览看板', rd:'研发管理', design:'设计管理', prod:'生产管理', material:'物料 / 样衣库', supplier:'供应商管理', report:'数据报表', permission:'权限管理'};
+
+/* ============ 示例数据 ============ */
+const styles = [
+  {
+    no:'ST-2501', name:'男款冲锋衣 · 黑色', batch:'B2501-01', qty:'1,200 件', supplier:'东莞华盛制衣',
+    owner:'李', designer:'林', due:'2026-12-05', progress:62, stage:'prod', status:'doing', statusText:'进行中',
+    cost:'¥142.00', review:'评审通过', version:'V3.2', po:'PO-2501',
+    rd:['done','done','done','done','done','done'],
+    ds:['done','done','done','done','done'],
+    pd:['done','done','doing','todo','todo','todo','todo','todo']
+  },
+  {
+    no:'ST-2502', name:'女款针织卫衣 · 米白', batch:'B2502-01', qty:'800 件', supplier:'苏州恒纺针织',
+    owner:'王', designer:'苏', due:'2026-12-12', progress:38, stage:'design', status:'doing', statusText:'进行中',
+    cost:'¥68.00', review:'评审通过', version:'V2.1', po:'—',
+    rd:['done','done','done','done','done','done'],
+    ds:['done','doing','todo','todo','todo'],
+    pd:['todo','todo','todo','todo','todo','todo','todo','todo']
+  },
+  {
+    no:'ST-2503', name:'户外羽绒服 · 藏蓝', batch:'B2503-01', qty:'500 件（预排）', supplier:'待定',
+    owner:'张', designer:'周', due:'2026-12-18', progress:20, stage:'rd', status:'review', statusText:'待审核',
+    cost:'待核价', review:'待样衣评审', version:'V1.0', po:'—',
+    rd:['done','done','done','doing','todo','todo'],
+    ds:['todo','todo','todo','todo','todo'],
+    pd:['todo','todo','todo','todo','todo','todo','todo','todo']
+  },
+  {
+    no:'ST-2504', name:'休闲长裤 · 卡其', batch:'B2504-02', qty:'1,500 件', supplier:'佛山顺达制衣',
+    owner:'陈', designer:'林', due:'2026-11-30', progress:45, stage:'prod', status:'block', statusText:'延期',
+    cost:'¥55.00', review:'评审通过', version:'V2.0', po:'PO-2504', delayReason:'面料采购延迟，物料未齐套',
+    rd:['done','done','done','done','done','done'],
+    ds:['done','done','done','done','done'],
+    pd:['block','todo','todo','todo','todo','todo','todo','todo']
+  },
+  {
+    no:'ST-2505', name:'短袖 T 恤 · 基础色组', batch:'B2505-01', qty:'2,000 件', supplier:'中山泰和服饰',
+    owner:'赵', designer:'苏', due:'2026-11-20', progress:100, stage:'done', status:'done', statusText:'已完成',
+    cost:'¥32.00', review:'评审通过', version:'V4.0', po:'PO-2505',
+    rd:['done','done','done','done','done','done'],
+    ds:['done','done','done','done','done'],
+    pd:['done','done','done','done','done','done','done','done']
+  },
+  {
+    no:'ST-2506', name:'防风夹克 · 橄榄绿', batch:'B2506-01', qty:'300 件（预排）', supplier:'待定',
+    owner:'张', designer:'周', due:'2026-12-25', progress:12, stage:'rd', status:'doing', statusText:'进行中',
+    cost:'待核价', review:'未提交评审', version:'V0.9', po:'—',
+    rd:['done','doing','todo','todo','todo','todo'],
+    ds:['todo','todo','todo','todo','todo'],
+    pd:['todo','todo','todo','todo','todo','todo','todo','todo']
+  },
+  {
+    no:'ST-2507', name:'连帽卫衣 · 灰色', batch:'B2507-01', qty:'600 件', supplier:'待定',
+    owner:'王', designer:'苏', due:'2026-12-20', progress:55, stage:'design', status:'review', statusText:'待审核',
+    cost:'¥72.00', review:'版型待确认', version:'V2.3', po:'—',
+    rd:['done','done','done','done','done','done'],
+    ds:['done','done','done','doing','todo'],
+    pd:['todo','todo','todo','todo','todo','todo','todo','todo']
+  }
+];
+
+/* ============ 通用渲染 ============ */
+function tag(cls, text){ return `<span class="tag ${cls}">${text}</span>`; }
+function dot(st){ return `<span class="node-dot ${st}" title="${ST_LABEL[st]}">${st==='done'?'✓':st==='doing'?'●':st==='block'?'!':'○'}</span>`; }
+function nodesCells(arr){ return arr.map(s=>`<td>${dot(s)}</td>`).join(''); }
+function currentNode(names, arr){
+  const i = arr.findIndex(s=>s==='doing'||s==='block');
+  if(i>=0) return names[i];
+  return arr.every(s=>s==='done') ? '全部完成' : '未开始';
+}
+
+/* ---------- 总览表 ---------- */
+const tbody = document.getElementById('styleTbody');
+const resultCount = document.getElementById('resultCount');
+const fKeyword=document.getElementById('fKeyword'), fStage=document.getElementById('fStage'),
+      fStatus=document.getElementById('fStatus'), fSupplier=document.getElementById('fSupplier');
+
+[...new Set(styles.map(s=>s.supplier))].forEach(s=>{
+  const opt=document.createElement('option'); opt.value=s; opt.textContent=s; fSupplier.appendChild(opt);
+});
+
+function overviewFilter(){
+  const kw=fKeyword.value.trim().toLowerCase(), stage=fStage.value, status=fStatus.value, sup=fSupplier.value;
+  return styles.filter(s=>{
+    const hitKw=!kw||[s.no,s.name,s.batch,s.supplier,s.owner].some(v=>v.toLowerCase().includes(kw));
+    return hitKw && (stage==='all'||s.stage===stage) && (status==='all'||s.status===status) && (sup==='all'||s.supplier===sup);
+  });
+}
+
+function renderOverview(){
+  document.getElementById('kpiRd').textContent=styles.filter(s=>s.stage==='rd').length;
+  document.getElementById('kpiDs').textContent=styles.filter(s=>s.stage==='design').length;
+  document.getElementById('kpiPd').textContent=styles.filter(s=>s.stage==='prod').length;
+  document.getElementById('kpiDone').textContent=styles.filter(s=>s.stage==='done').length;
+  document.getElementById('kpiBlock').textContent=styles.filter(s=>s.status==='block').length;
+  const list=overviewFilter();
+  resultCount.textContent=`共 ${list.length} 款`;
+  if(!list.length){ tbody.innerHTML=`<tr><td colspan="13"><div class="empty">没有符合条件的款式，请调整筛选条件</div></td></tr>`; return; }
+  tbody.innerHTML=list.map(s=>`
+    <tr class="clickable" data-no="${s.no}">
+      <td><div class="cell-style"><div class="thumb">款图</div><div><div class="style-no">${s.no}</div><div class="style-name">${s.name}</div></div></div></td>
+      <td>${s.batch}</td><td>${s.qty}</td><td>${s.supplier}</td>
+      <td>${tag(s.rd.includes('doing')||s.rd.includes('block')?'doing':(s.rd.every(x=>x==='done')?'done':'todo'), s.rd.every(x=>x==='done')?'已完成':(s.rd.some(x=>x==='todo')&&!s.rd.some(x=>x==='doing')&&!s.rd.some(x=>x==='block')?'未开始':'研发中'))}</td>
+      <td>${tag(s.ds.every(x=>x==='done')?'done':(s.ds.some(x=>x==='doing')?'doing':'todo'), s.ds.every(x=>x==='done')?'已完成':(s.ds.some(x=>x==='doing')?'设计中':'未开始'))}</td>
+      <td>${tag(s.pd.includes('block')?'block':(s.pd.every(x=>x==='done')?'done':(s.pd.some(x=>x==='doing')?'doing':'todo')), s.pd.every(x=>x==='done')?'已出货':(s.pd.includes('block')?'物料阻塞':(s.pd.some(x=>x==='doing')?'生产中':'未开始')))}</td>
+      <td>${currentNode([...RD_NODES,...DS_NODES,...PD_NODES], [...s.rd,...s.ds,...s.pd])}</td>
+      <td><span class="avatar-sm">${s.owner}</span></td>
+      <td>${s.due}</td>
+      <td><div class="progress"><div class="bar"><div class="fill" style="width:${s.progress}%"></div></div><div class="pct">${s.progress}%</div></div></td>
+      <td>${tag(s.status,s.statusText)}</td>
+      <td><div class="op-btns"><button class="btn" data-action="edit" data-type="style" data-key="${s.no}">编辑</button><button class="btn danger" data-action="del" data-type="style" data-key="${s.no}">删除</button></div></td>
+    </tr>`).join('');
+}
+[fKeyword,fStage,fStatus,fSupplier].forEach(el=>{ el.addEventListener('input',renderOverview); el.addEventListener('change',renderOverview); });
+document.getElementById('fReset').addEventListener('click',()=>{ fKeyword.value=''; fStage.value='all'; fStatus.value='all'; fSupplier.value='all'; renderOverview(); });
+
+/* ---------- 研发表 ---------- */
+function renderRd(){
+  const list=styles.filter(s=> s.rd.some(x=>x!=='done'));
+  document.getElementById('rdCount').textContent=list.length;
+  document.getElementById('rdCountText').textContent=`共 ${list.length} 款`;
+  document.getElementById('view-rd').querySelector('.mini-stats .mini:nth-child(2) .num').textContent=list.filter(s=>s.rd[4]==='doing'||s.status==='review').length;
+  document.getElementById('view-rd').querySelector('.mini-stats .mini:nth-child(3) .num').textContent=list.filter(s=>s.rd.includes('doing')).length;
+  document.getElementById('view-rd').querySelector('.mini-stats .mini:nth-child(4) .num').textContent=styles.filter(s=>s.rd[5]==='done').length;
+  document.getElementById('rdTbody').innerHTML=list.map(s=>`
+    <tr class="clickable" data-no="${s.no}">
+      <td><div class="cell-style"><div class="thumb">款图</div><div><div class="style-no">${s.no}</div><div class="style-name">${s.name}</div></div></div></td>
+      <td>${currentNode(RD_NODES,s.rd)}</td>
+      ${nodesCells(s.rd)}
+      <td><span class="avatar-sm">${s.owner}</span></td>
+      <td>${s.cost}</td><td>${s.review}</td>
+      <td><div class="progress"><div class="bar"><div class="fill" style="width:${s.progress}%"></div></div><div class="pct">${s.progress}%</div></div></td>
+    </tr>`).join('') || `<tr><td colspan="12"><div class="empty">暂无在研款式</div></td></tr>`;
+}
+
+/* ---------- 设计表 ---------- */
+function renderDs(){
+  const list=styles.filter(s=> s.ds.some(x=>x!=='done') && s.rd.every(x=>x==='done'));
+  document.getElementById('dsCount').textContent=list.length;
+  document.getElementById('dsCountText').textContent=`共 ${list.length} 款`;
+  document.getElementById('view-design').querySelector('.mini-stats .mini:nth-child(2) .num').textContent=list.filter(s=>s.ds[4]==='todo').length;
+  document.getElementById('view-design').querySelector('.mini-stats .mini:nth-child(3) .num').textContent=list.filter(s=>s.ds.includes('doing')).length;
+  document.getElementById('view-design').querySelector('.mini-stats .mini:nth-child(4) .num').textContent=styles.filter(s=>s.ds[4]==='done').length;
+  document.getElementById('dsTbody').innerHTML=list.map(s=>`
+    <tr class="clickable" data-no="${s.no}">
+      <td><div class="cell-style"><div class="thumb">款图</div><div><div class="style-no">${s.no}</div><div class="style-name">${s.name}</div></div></div></td>
+      <td>${currentNode(DS_NODES,s.ds)}</td>
+      ${nodesCells(s.ds)}
+      <td><span class="avatar-sm">${s.designer}</span></td>
+      <td>${s.version}</td>
+      <td><div class="progress"><div class="bar"><div class="fill" style="width:${s.progress}%"></div></div><div class="pct">${s.progress}%</div></div></td>
+    </tr>`).join('') || `<tr><td colspan="10"><div class="empty">暂无在设计款式</div></td></tr>`;
+}
+
+/* ---------- 生产表 ---------- */
+function renderPd(){
+  const list=styles.filter(s=> s.pd.some(x=>x!=='todo'));
+  document.getElementById('pdCount').textContent=list.length;
+  document.getElementById('pdCountText').textContent=`共 ${list.length} 个工单`;
+  document.getElementById('view-prod').querySelector('.mini-stats .mini:nth-child(2) .num').textContent=list.filter(s=>s.pd[0]!=='done').length;
+  document.getElementById('view-prod').querySelector('.mini-stats .mini:nth-child(3) .num').textContent=list.filter(s=>s.pd.includes('doing')).length;
+  document.getElementById('view-prod').querySelector('.mini-stats .mini:nth-child(4) .num').textContent=list.filter(s=>s.status==='block').length;
+  document.getElementById('pdTbody').innerHTML=list.map(s=>`
+    <tr class="clickable" data-no="${s.no}">
+      <td><div class="cell-style"><div class="thumb">款图</div><div><div class="style-no">${s.no}</div><div class="style-name">${s.name}</div></div></div></td>
+      <td>${s.batch}</td><td>${s.qty}</td><td>${s.supplier}</td>
+      ${nodesCells(s.pd)}
+      <td>${s.due}</td><td>${tag(s.status,s.statusText)}</td>
+    </tr>`).join('') || `<tr><td colspan="14"><div class="empty">暂无在产工单</div></td></tr>`;
+}
+
+/* ============ 详情抽屉 ============ */
+const NODE_GROUP={rd:'rd', ds:'design', pd:'prod'};
+const nodeModal=document.getElementById('nodeModal'), nodeMask=document.getElementById('nodeMask');
+let nodeCtx={style:null, group:null, index:null};
+function nodeDates(s,g){ return (s.dates&&s.dates[g])||[]; }
+function nodeEditable(g){
+  const cfg=roleConfig[currentRole];
+  if(cfg.edit==='all') return true;
+  if(cfg.edit==='none') return false;
+  return cfg.edit===NODE_GROUP[g];
+}
+function openNodeEditor(g,i){
+  const s=styles.find(x=>x.no===currentDrawerNo); if(!s) return;
+  const arr=s[g], dates=nodeDates(s,g);
+  nodeCtx={style:s, group:g, index:i};
+  const names=g==='rd'?RD_NODES:g==='ds'?DS_NODES:PD_NODES;
+  document.getElementById('nodeTitle').textContent=names[i];
+  document.getElementById('nodeStatus').value=arr[i];
+  document.getElementById('nodeDate').value=dates[i]||'';
+  nodeModal.classList.add('open'); nodeMask.classList.add('open');
+}
+function closeNode(){ nodeModal.classList.remove('open'); nodeMask.classList.remove('open'); }
+
+const drawer=document.getElementById('drawer'), mask=document.getElementById('drawerMask');
+function openDrawer(no){
+  const s=styles.find(x=>x.no===no); if(!s) return;
+  currentDrawerNo=no;
+  document.getElementById('dNo').textContent=s.no;
+  document.getElementById('dName').textContent=s.name;
+  const info=[['批次',s.batch],['数量',s.qty],['供应商 / 工厂',s.supplier],['负责人',s.owner],['设计师',s.designer],['计划交期',s.due],['成本',s.cost],['稿版本',s.version],['状态',s.statusText],['整体进度',s.progress+'%']];
+  document.getElementById('dInfo').innerHTML=info.map(([k,v])=>`<div class="item"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+  const group=(title,names,arr,gkey)=>{
+    const dates=nodeDates(s,gkey);
+    return `<div class="timeline-group"><h4>${title}</h4>
+      ${names.map((n,i)=>{
+        const editable=nodeEditable(gkey);
+        const dt=dates[i]||'';
+        return `<div class="tl ${editable?'editable':''}" data-group="${gkey}" data-index="${i}" title="${editable?'点击编辑该环节':''}">
+          ${dot(arr[i])}<span class="name">${n}</span><span class="node-date">${dt}</span><span class="style-name">${ST_LABEL[arr[i]]}</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+  };
+  document.getElementById('dTimeline').innerHTML=group('① 研发',RD_NODES,s.rd,'rd')+group('② 设计',DS_NODES,s.ds,'ds')+group('③ 生产',PD_NODES,s.pd,'pd');
+  const cfg=roleConfig[currentRole];
+  const canEdit = cfg.edit==='all' || (cfg.edit!=='none' && cfg.edit===s.stage);
+  document.getElementById('btnEditStyle').style.display = canEdit ? 'inline-flex' : 'none';
+  drawer.classList.add('open'); mask.classList.add('open');
+}
+function closeDrawer(){ drawer.classList.remove('open'); mask.classList.remove('open'); }
+document.getElementById('drawerClose').addEventListener('click',closeDrawer);
+mask.addEventListener('click',closeDrawer);
+document.body.addEventListener('click',e=>{
+  const tl=e.target.closest('.tl.editable');
+  if(tl){ openNodeEditor(tl.dataset.group, Number(tl.dataset.index)); return; }
+  const rel=e.target.closest('.rel-link');
+  if(rel){ e.preventDefault(); openRelModal('关联款式', rel.dataset.styles.split(',')); return; }
+  const link=e.target.closest('.style-link');
+  if(link){ e.preventDefault(); openDrawer(link.dataset.style); return; }
+  const row=e.target.closest('tr.clickable'); if(row) openDrawer(row.dataset.no);
+});
+
+/* ============ 数据报表 ============ */
+function countBy(arr,fn){ const m={}; arr.forEach(x=>{const k=fn(x); m[k]=(m[k]||0)+1;}); return m; }
+
+function renderReport(){
+  // 款式进度分布
+  const stageLabel={rd:'研发中',design:'设计中',prod:'生产中',done:'已完成'};
+  const stageColor={rd:'var(--blue)',design:'var(--orange)',prod:'var(--green)',done:'var(--gray)'};
+  const cnt=countBy(styles,s=>s.stage);
+  const maxStage=Math.max(1,...Object.values(cnt));
+  document.getElementById('chartStage').innerHTML=Object.keys(stageLabel).map(k=>{
+    const v=cnt[k]||0;
+    return `<div class="bar-row"><span class="lbl">${stageLabel[k]}</span><div class="track"><div class="fill" style="width:${v/maxStage*100}%;background:${stageColor[k]}"></div></div><span class="val">${v}</span></div>`;
+  }).join('');
+
+  // 平均环节周期（示例静态数据）
+  const cycle=[['研发周期',28,'var(--blue)'],['设计周期',14,'var(--orange)'],['生产周期',22,'var(--green)']];
+  const maxC=Math.max(...cycle.map(c=>c[1]));
+  document.getElementById('chartCycle').innerHTML=cycle.map(([l,v,c])=>`
+    <div class="bar-row"><span class="lbl">${l}</span><div class="track"><div class="fill" style="width:${v/maxC*100}%;background:${c}"></div></div><span class="val">${v}天</span></div>`).join('');
+
+  // 供应商交付情况
+  const supMap={};
+  styles.forEach(s=>{ supMap[s.supplier]=supMap[s.supplier]||{total:0,delay:0}; supMap[s.supplier].total++; if(s.status==='block') supMap[s.supplier].delay++; });
+  const maxT=Math.max(1,...Object.values(supMap).map(x=>x.total));
+  document.getElementById('chartSupplier').innerHTML=Object.keys(supMap).map(k=>{
+    const x=supMap[k];
+    return `<div class="bar-row"><span class="lbl" style="width:110px">${k}</span><div class="track"><div class="fill" style="width:${x.total/maxT*100}%;background:${x.delay?'var(--red)':'var(--green)'}"></div></div><span class="val">${x.delay?x.delay+' 延期':x.total+' 单'}</span></div>`;
+  }).join('');
+
+  // 延期 / 阻塞预警清单
+  const delays=styles.filter(s=>s.status==='block');
+  document.getElementById('delayCount').textContent=`共 ${delays.length} 款预警`;
+  document.getElementById('delayTbody').innerHTML=delays.map(s=>`
+    <tr class="clickable" data-no="${s.no}">
+      <td><div class="style-no">${s.no}</div></td>
+      <td>${s.name}</td><td>${s.batch}</td><td>${s.supplier}</td>
+      <td>${s.delayReason||'—'}</td>
+      <td><span class="avatar-sm">${s.owner}</span></td><td>${s.due}</td>
+      <td>${tag(s.status,s.statusText)}</td>
+    </tr>`).join('') || `<tr><td colspan="8"><div class="empty">暂无延期 / 阻塞款式</div></td></tr>`;
+
+  // 报表供应商下拉去重
+  const supSel=document.getElementById('rptSupplier');
+  [...new Set(styles.map(s=>s.supplier))].forEach(s=>{
+    if(!supSel.querySelector(`option[value="${s}"]`)){ const o=document.createElement('option'); o.value=s; o.textContent=s; supSel.appendChild(o); }
+  });
+}
+
+/* ============ 权限管理 ============ */
+function renderUsers(){
+  document.getElementById('userTbody').innerHTML=users.map(u=>`
+    <tr>
+      <td><div class="style-no">${u.account}</div></td>
+      <td>${u.name}</td>
+      <td>${roleConfig[u.role].name}</td>
+      <td>${u.phone}</td>
+      <td>${roleConfig[u.role].scope}</td>
+      <td>${u.status==='启用'?tag('done','启用'):tag('todo','禁用')}</td>
+      <td><div class="op-btns"><button class="btn" data-action="edit" data-type="user" data-key="${u.account}">编辑</button><button class="btn" data-action="toggle-user" data-type="user" data-key="${u.account}">${u.status==='启用'?'禁用':'启用'}</button><button class="btn danger" data-action="del" data-type="user" data-key="${u.account}">删除</button></div></td>
+    </tr>`).join('');
+}
+
+function renderRoles(){
+  const editText={all:'全部环节可编辑',none:'只读，不可编辑',rd:'仅可编辑研发环节',design:'仅可编辑设计环节',prod:'仅可编辑生产环节'};
+  document.getElementById('roleList').innerHTML=Object.keys(roleConfig).map(k=>{
+    const r=roleConfig[k];
+    const checks=Object.keys(PAGE_NAMES).map(p=>`<label><input type="checkbox" ${r.pages.includes(p)?'checked':''} disabled> ${PAGE_NAMES[p]}</label>`).join('');
+    return `<div class="role-card">
+      <div class="role-head"><span class="role-name">${r.name}</span><span class="result-count">${k}</span></div>
+      <div class="perm-checks">${checks}</div>
+      <div class="perm-meta"><span>数据范围：<b>${r.scope}</b></span><span>操作权限：<b>${editText[r.edit]}</b></span></div>
+    </div>`;
+  }).join('');
+}
+
+document.querySelectorAll('.perm-tab').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.perm-tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const t=btn.dataset.perm;
+    document.getElementById('perm-user').hidden=(t!=='user');
+    document.getElementById('perm-role').hidden=(t!=='role');
+  });
+});
+
+/* ============ 供应商档案 ============ */
+const suppliers = [
+  { code:'S001', name:'东莞华盛制衣', cat:'成衣加工厂', contact:'刘经理', phone:'138****1101', region:'广东东莞', status:'合作中', remark:'冲锋衣 / 外套主力工厂' },
+  { code:'S002', name:'苏州恒纺针织', cat:'面料 / 针织', contact:'周经理', phone:'139****2202', region:'江苏苏州', status:'合作中', remark:'卫衣布 / 针织面料' },
+  { code:'S003', name:'佛山顺达制衣', cat:'成衣加工厂', contact:'陈经理', phone:'137****3303', region:'广东佛山', status:'合作中', remark:'休闲裤装' },
+  { code:'S004', name:'中山泰和服饰', cat:'成衣加工厂', contact:'黄经理', phone:'136****4404', region:'广东中山', status:'合作中', remark:'T恤 / 基础款' },
+  { code:'S005', name:'待定', cat:'待开发', contact:'—', phone:'—', region:'—', status:'待开发', remark:'尚未定点，立项后补充' }
+];
+
+/* ============ 物料 / 样衣库 ============ */
+const materials = [
+  { code:'M-F001', name:'40D 尼龙四面弹', cat:'面料', color:'黑色 BK01', comp:'100% 锦纶', supplier:'东莞华盛制衣', stock:'1,200 m', styles:['ST-2501','ST-2506'], remark:'冲锋衣外壳面料' },
+  { code:'M-F002', name:'320g 精梳棉卫衣布', cat:'面料', color:'米白 CR02', comp:'95% 棉 5% 氨纶', supplier:'苏州恒纺针织', stock:'800 m', styles:['ST-2502','ST-2507'], remark:'' },
+  { code:'M-F003', name:'20D 轻薄羽绒面料', cat:'面料', color:'藏蓝 NV03', comp:'100% 锦纶', supplier:'待定', stock:'—', styles:['ST-2503'], remark:'待采购封样' },
+  { code:'M-A001', name:'树脂防水拉链 5#', cat:'拉链', color:'黑色', comp:'—', supplier:'中山泰和服饰', stock:'3,000 条', styles:['ST-2501','ST-2506'], remark:'防水拉链' },
+  { code:'M-A002', name:'金属纽扣', cat:'纽扣', color:'哑枪色', comp:'锌合金', supplier:'佛山顺达制衣', stock:'5,000 粒', styles:['ST-2504'], remark:'' },
+  { code:'M-A003', name:'针织织带 / 松紧', cat:'织带', color:'灰色', comp:'90% 涤纶 10% 氨纶', supplier:'待定', stock:'—', styles:['ST-2507','ST-2502'], remark:'帽绳用' }
+];
+
+const samples = [
+  { code:'SP-001', style:'ST-2501', type:'确认样', size:'M', date:'11-08', receiver:'李', location:'样衣房 A-01', status:'在库', remark:'版型已确认' },
+  { code:'SP-002', style:'ST-2502', type:'初样', size:'L', date:'11-15', receiver:'王', location:'样衣房 A-03', status:'借出', remark:'设计师借去配色' },
+  { code:'SP-003', style:'ST-2503', type:'初样', size:'M', date:'11-18', receiver:'张', location:'样衣房 B-02', status:'在库', remark:'待评审' },
+  { code:'SP-004', style:'ST-2505', type:'大货样', size:'M', date:'11-12', receiver:'赵', location:'归档柜 C-01', status:'归还', remark:'已封样归档' },
+  { code:'SP-005', style:'ST-2507', type:'产前样', size:'L', date:'11-20', receiver:'王', location:'样衣房 B-05', status:'在库', remark:'版型待确认' }
+];
+
+const SP_TAG = { '在库':'done', '借出':'doing', '归还':'todo' };
+
+/* ----- 关联款式弹窗 ----- */
+const relModal=document.getElementById('relModal'), relMask=document.getElementById('relMask');
+function openRelModal(title, nos){
+  document.getElementById('relTitle').textContent=`${title}（${nos.length}）`;
+  document.getElementById('relList').innerHTML=nos.map(no=>{
+    const s=styles.find(x=>x.no===no);
+    if(!s) return `<div class="rel-row"><div class="info"><div class="style-no">${no}</div></div></div>`;
+    return `<div class="rel-row" data-no="${s.no}">
+      <div class="thumb">款图</div>
+      <div class="info"><div class="style-no">${s.no}</div><div class="name">${s.name}</div></div>
+      ${tag(s.status,s.statusText)}
+    </div>`;
+  }).join('');
+  relModal.classList.add('open'); relMask.classList.add('open');
+}
+function closeRel(){ relModal.classList.remove('open'); relMask.classList.remove('open'); }
+document.getElementById('relClose').addEventListener('click',closeRel);
+relMask.addEventListener('click',closeRel);
+document.getElementById('relList').addEventListener('click',e=>{
+  const row=e.target.closest('.rel-row'); if(!row) return;
+  closeRel(); openDrawer(row.dataset.no);
+});
+
+function fillSelect(sel, values){
+  values.forEach(v=>{ if(!sel.querySelector(`option[value="${v}"]`)){ const o=document.createElement('option'); o.value=v; o.textContent=v; sel.appendChild(o); } });
+}
+
+function renderMat(){
+  const kw=document.getElementById('matKw').value.trim().toLowerCase();
+  const cat=document.getElementById('matCat').value, sup=document.getElementById('matSupplier').value;
+  const list=materials.filter(m=>{
+    const hitKw=!kw||[m.code,m.name,m.color,...m.styles].some(x=>x.toLowerCase().includes(kw));
+    return hitKw && (cat==='all'||m.cat===cat) && (sup==='all'||m.supplier===sup);
+  });
+  document.getElementById('matCount').textContent=`共 ${list.length} 项`;
+  document.getElementById('matTbody').innerHTML=list.map(m=>`
+    <tr>
+      <td><div class="style-no">${m.code}</div></td>
+      <td>${m.name}</td>
+      <td>${m.cat}</td>
+      <td>${m.color}</td>
+      <td>${m.comp}</td>
+      <td>${m.supplier}</td>
+      <td>${m.stock==='—'?tag('block','待采购'):m.stock}</td>
+      <td><a class="style-link rel-link" data-styles="${m.styles.join(',')}">查看 ${m.styles.length} 款</a></td>
+      <td>${m.remark||'—'}</td>
+      <td><div class="op-btns"><button class="btn" data-action="edit" data-type="material" data-key="${m.code}">编辑</button><button class="btn danger" data-action="del" data-type="material" data-key="${m.code}">删除</button></div></td>
+    </tr>`).join('') || `<tr><td colspan="10"><div class="empty">暂无面辅料记录</div></td></tr>`;
+}
+
+function renderSample(){
+  const kw=document.getElementById('spKw').value.trim().toLowerCase();
+  const type=document.getElementById('spType').value, st=document.getElementById('spStatus').value;
+  const list=samples.filter(s=>{
+    const hitKw=!kw||[s.code,s.style,s.location].some(x=>x.toLowerCase().includes(kw));
+    return hitKw && (type==='all'||s.type===type) && (st==='all'||s.status===st);
+  });
+  document.getElementById('spCount').textContent=`共 ${list.length} 件`;
+  document.getElementById('spTbody').innerHTML=list.map(s=>`
+    <tr>
+      <td><div class="style-no">${s.code}</div></td>
+      <td><a class="style-link" data-style="${s.style}">${s.style}</a></td>
+      <td>${s.type}</td>
+      <td>${s.size}</td>
+      <td>${s.date}</td>
+      <td><span class="avatar-sm">${s.receiver}</span></td>
+      <td>${s.location}</td>
+      <td>${tag(SP_TAG[s.status],s.status)}</td>
+      <td>${s.remark||'—'}</td>
+      <td><div class="op-btns"><button class="btn" data-action="toggle-sample" data-type="sample" data-key="${s.code}">${s.status==='借出'?'归还':'借出'}</button><button class="btn" data-action="edit" data-type="sample" data-key="${s.code}">编辑</button><button class="btn danger" data-action="del" data-type="sample" data-key="${s.code}">删除</button></div></td>
+    </tr>`).join('') || `<tr><td colspan="10"><div class="empty">暂无样衣记录</div></td></tr>`;
+}
+
+fillSelect(document.getElementById('matCat'), [...new Set(materials.map(m=>m.cat))]);
+fillSelect(document.getElementById('matSupplier'), [...new Set(materials.map(m=>m.supplier))]);
+fillSelect(document.getElementById('spType'), [...new Set(samples.map(s=>s.type))]);
+fillSelect(document.getElementById('spStatus'), [...new Set(samples.map(s=>s.status))]);
+fillSelect(document.getElementById('supCat'), [...new Set(suppliers.map(s=>s.cat))]);
+
+['matKw','matCat','matSupplier'].forEach(id=>{ const el=document.getElementById(id); el.addEventListener('input',renderMat); el.addEventListener('change',renderMat); });
+['spKw','spType','spStatus'].forEach(id=>{ const el=document.getElementById(id); el.addEventListener('input',renderSample); el.addEventListener('change',renderSample); });
+['supKw','supCat','supStatus'].forEach(id=>{ const el=document.getElementById(id); el.addEventListener('input',renderSupplier); el.addEventListener('change',renderSupplier); });
+
+document.querySelectorAll('.mat-tab').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.mat-tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const t=btn.dataset.mat;
+    document.getElementById('tab-mat').hidden=(t!=='mat');
+    document.getElementById('tab-sample').hidden=(t!=='sample');
+  });
+});
+
+/* ============ 通用表单引擎 + 增删改（原型内存态，刷新还原示例数据） ============ */
+const STATUS_TEXT = { doing:'进行中', review:'待审核', block:'阻塞/延期', done:'已完成' };
+
+const FORM_SCHEMAS = {
+  style:{ title:'款式', fields:[
+    {key:'no',label:'款号',type:'text',locked:true,group:'base'},
+    {key:'name',label:'品名',type:'text',required:true,group:'base'},
+    {key:'batch',label:'批次',type:'text',group:'prod'},
+    {key:'qty',label:'数量（件）',type:'integer',group:'prod'},
+    {key:'supplier',label:'供应商 / 工厂',type:'select',group:'prod',options:()=>suppliers.map(s=>[s.name,s.name])},
+    {key:'owner',label:'负责人',type:'text',group:'rd'},
+    {key:'designer',label:'设计师',type:'text',group:'design'},
+    {key:'due',label:'计划交期',type:'date',group:'prod'},
+    {key:'cost',label:'成本（元）',type:'decimal',group:'rd'},
+    {key:'version',label:'稿版本（自动更新）',type:'readonly',group:'base'},
+    {key:'stage',label:'当前阶段',type:'select',group:'base',options:[['rd','研发中'],['design','设计中'],['prod','生产中'],['done','已完成']]},
+    {key:'status',label:'状态',type:'select',group:'base',options:[['doing','进行中'],['review','待审核'],['block','阻塞/延期'],['done','已完成']]},
+    {key:'progress',label:'整体进度（按环节自动计算）',type:'readonly',group:'base'}
+  ]},
+  material:{ title:'面辅料', fields:[
+    {key:'code',label:'物料编码',type:'text',locked:true},
+    {key:'name',label:'物料名称',type:'text',required:true},
+    {key:'cat',label:'分类',type:'select',options:[['面料','面料'],['里布','里布'],['拉链','拉链'],['纽扣','纽扣'],['织带','织带'],['辅料','辅料']]},
+    {key:'color',label:'颜色 / 色号',type:'text'},
+    {key:'comp',label:'成分',type:'text'},
+    {key:'supplier',label:'供应商',type:'text'},
+    {key:'stock',label:'库存',type:'text'},
+    {key:'styles',label:'关联款式（可搜索多选）',type:'combo',options:()=>styles.map(s=>[s.no,`${s.no} ${s.name}`])},
+    {key:'remark',label:'备注',type:'textarea',full:true}
+  ]},
+  sample:{ title:'样衣', fields:[
+    {key:'code',label:'样衣编号',type:'text',locked:true},
+    {key:'style',label:'关联款号',type:'select',options:()=>styles.map(s=>[s.no,`${s.no} ${s.name}`])},
+    {key:'type',label:'样衣类型',type:'select',options:[['初样','初样'],['确认样','确认样'],['产前样','产前样'],['大货样','大货样']]},
+    {key:'size',label:'尺码',type:'text'},
+    {key:'date',label:'送样时间',type:'text'},
+    {key:'receiver',label:'接收人',type:'text'},
+    {key:'location',label:'存放位置',type:'text'},
+    {key:'status',label:'状态',type:'select',options:[['在库','在库'],['借出','借出'],['归还','归还']]},
+    {key:'remark',label:'备注',type:'textarea',full:true}
+  ]},
+  user:{ title:'系统用户', fields:[
+    {key:'account',label:'账号',type:'text',locked:true},
+    {key:'name',label:'姓名',type:'text',required:true},
+    {key:'role',label:'角色',type:'select',options:()=>Object.keys(roleConfig).map(k=>[k,roleConfig[k].name])},
+    {key:'phone',label:'手机号',type:'text'},
+    {key:'password',label:'密码',type:'pwd',required:true},
+    {key:'status',label:'状态',type:'select',options:[['启用','启用'],['禁用','禁用']]}
+  ]},
+  supplier:{ title:'供应商', fields:[
+    {key:'code',label:'供应商编码',type:'text',locked:true},
+    {key:'name',label:'供应商名称',type:'text',required:true},
+    {key:'cat',label:'类别',type:'select',options:[['成衣加工厂','成衣加工厂'],['面料 / 针织','面料 / 针织'],['辅料 / 配件','辅料 / 配件'],['待开发','待开发']]},
+    {key:'contact',label:'联系人',type:'text'},
+    {key:'phone',label:'电话',type:'text'},
+    {key:'region',label:'地区',type:'text'},
+    {key:'status',label:'状态',type:'select',options:[['合作中','合作中'],['待开发','待开发'],['已停用','已停用']]},
+    {key:'remark',label:'备注',type:'textarea',full:true}
+  ]}
+};
+
+const formModal=document.getElementById('formModal'), formMask=document.getElementById('formMask');
+const confirmModal=document.getElementById('confirmModal'), confirmMask=document.getElementById('confirmMask');
+let formCtx={type:null, record:null}, confirmCb=null, currentDrawerNo=null;
+
+const RULES={ integer:/^\d+$/, decimal:/^\d+(\.\d{1,2})?$/ };
+function fieldEditable(f){
+  const cfg=roleConfig[currentRole];
+  if(cfg.edit==='all') return true;
+  if(cfg.edit==='none') return false;
+  if(f.group==='base') return true;
+  return f.group===cfg.edit;
+}
+function validateField(f,val){
+  if(f.required && !String(val==null?'':val).trim()) return '请填写「'+f.label+'」';
+  if((f.type==='integer'||f.type==='decimal') && String(val==null?'':val).trim()){
+    if(!RULES[f.type].test(String(val).trim())) return '「'+f.label+'」格式不正确：'+(f.type==='integer'?'需为整数':'需为数字，最多两位小数');
+  }
+  return null;
+}
+function fieldControl(f, value, disabled, record){
+  const dis=disabled?'disabled':'';
+  if(f.type==='select'){
+    const opts=typeof f.options==='function'?f.options():f.options;
+    return `<select data-key="${f.key}" ${dis}>`+opts.map(([v,t])=>`<option value="${v}" ${String(value)===String(v)?'selected':''}>${t}</option>`).join('')+`</select>`;
+  }
+  if(f.type==='textarea') return `<textarea data-key="${f.key}" ${dis}>${value??''}</textarea>`;
+  if(f.type==='date') return `<input type="date" data-key="${f.key}" value="${value??''}" ${dis}>`;
+  if(f.type==='integer') return `<input type="number" min="0" step="1" data-key="${f.key}" value="${value??''}" ${dis}>`;
+  if(f.type==='decimal') return `<input type="number" min="0" step="0.01" data-key="${f.key}" value="${value??''}" ${dis}>`;
+  if(f.type==='readonly') return `<input type="text" data-key="${f.key}" value="${value??''}" disabled>`;
+  if(f.type==='pwd'){
+    if(!record){
+      return `<input type="password" data-key="password" placeholder="请设置初始密码">`;
+    }
+    return `<div class="pwd-row">
+      <input type="password" data-key="password" value="****" disabled data-mode="mask">
+      <button type="button" class="btn" data-pwd-view>查看</button>
+      <button type="button" class="btn" data-pwd-edit>修改</button>
+    </div>`;
+  }
+  if(f.type==='checkboxes'){
+    const opts=typeof f.options==='function'?f.options():f.options;
+    const arr=Array.isArray(value)?value:[];
+    return `<div class="check-group">`+opts.map(([v,t])=>`<label><input type="checkbox" data-key="${f.key}" value="${v}" ${arr.includes(v)?'checked':''}> ${t}</label>`).join('')+`</div>`;
+  }
+  if(f.type==='combo'){
+    const opts=typeof f.options==='function'?f.options():f.options;
+    const arr=Array.isArray(value)?value:[];
+    const tags=opts.filter(o=>arr.includes(o[0])).map(o=>`<span class="combo-tag" data-v="${o[0]}">${o[0]}<span class="x" data-x="${o[0]}">×</span></span>`).join('');
+    return `<div class="combo" data-key="${f.key}">
+      <div class="combo-box" data-box>${tags}<input class="combo-search" data-search placeholder="搜索并选择款式…"></div>
+      <div class="combo-panel" data-panel hidden>${opts.map(([v,t])=>`<div class="combo-option" data-v="${v}"><label><input type="checkbox" data-key="${f.key}" value="${v}" ${arr.includes(v)?'checked':''}> ${t}</label></div>`).join('')}</div>
+    </div>`;
+  }
+  return `<input type="${f.type}" data-key="${f.key}" value="${value??''}" ${dis}>`;
+}
+
+function syncComboTags(combo){
+  const box=combo.querySelector('[data-box]'), search=box.querySelector('[data-search]');
+  combo.querySelectorAll('.combo-tag').forEach(t=>t.remove());
+  combo.querySelectorAll('input[type=checkbox]:checked').forEach(c=>{
+    const tag=document.createElement('span');
+    tag.className='combo-tag'; tag.dataset.v=c.value;
+    tag.innerHTML=`${c.value}<span class="x" data-x="${c.value}">×</span>`;
+    box.insertBefore(tag,search);
+  });
+}
+function bindCombos(){
+  document.querySelectorAll('#formBody .combo').forEach(combo=>{
+    const box=combo.querySelector('[data-box]'), panel=combo.querySelector('[data-panel]'), search=combo.querySelector('[data-search]');
+    box.addEventListener('click',e=>{
+      const x=e.target.closest('.x');
+      if(x){
+        const v=x.dataset.x, cb=combo.querySelector(`input[value="${v}"]`); if(cb) cb.checked=false;
+        const tag=box.querySelector(`.combo-tag[data-v="${v}"]`); if(tag) tag.remove();
+        return;
+      }
+      panel.hidden=false; search.focus();
+    });
+    search.addEventListener('input',()=>{
+      const kw=search.value.trim().toLowerCase();
+      combo.querySelectorAll('.combo-option').forEach(opt=>{
+        opt.classList.toggle('hide', kw && !opt.textContent.toLowerCase().includes(kw));
+      });
+    });
+    combo.querySelectorAll('input[type=checkbox]').forEach(cb=>{ cb.addEventListener('change',()=>syncComboTags(combo)); });
+  });
+}
+function bindPwd(){
+  const row=document.querySelector('#formBody .pwd-row'); if(!row) return;
+  const input=row.querySelector('[data-key="password"]');
+  const viewBtn=row.querySelector('[data-pwd-view]');
+  const editBtn=row.querySelector('[data-pwd-edit]');
+  const realPwd=formCtx.record?formCtx.record.password:'';
+  viewBtn.addEventListener('click',()=>{
+    if(input.type==='password'){
+      input.type='text';
+      if(input.dataset.mode!=='edit') input.value=realPwd;
+      viewBtn.textContent='隐藏';
+    } else {
+      input.type='password';
+      if(input.dataset.mode!=='edit'){ input.value='****'; input.dataset.mode='mask'; }
+      viewBtn.textContent='查看';
+    }
+  });
+  editBtn.addEventListener('click',()=>{
+    input.disabled=false; input.type='password'; input.value=''; input.dataset.mode='edit';
+    viewBtn.textContent='查看'; input.focus();
+  });
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.combo')) document.querySelectorAll('#formBody .combo-panel').forEach(p=>p.hidden=true);
+});
+
+function openForm(type, record){
+  const schema=FORM_SCHEMAS[type];
+  formCtx={type, record:record||null};
+  document.getElementById('formTitle').textContent=(record?'编辑':'新增')+schema.title;
+  document.getElementById('formBody').innerHTML=schema.fields.map(f=>{
+    let val=record?record[f.key]:(f.type==='checkboxes'||f.type==='combo'?[]:'');
+    if(type==='style' && record){
+      if(f.key==='qty'){ val=String(val==null?'':val).replace(/[^\d.]/g,''); val=/^\d+(\.\d+)?$/.test(val)?val:''; }
+      else if(f.key==='cost'){ val=String(val==null?'':val).replace(/[¥￥,]/g,''); val=/^\d+(\.\d{1,2})?$/.test(val.trim())?val.trim():''; }
+      else if(f.key==='progress') val=(val==null?0:val)+'%';
+    }
+    const disabled=f.type==='readonly' ? true : (!fieldEditable(f) || (f.locked && !!record));
+    return `<div class="form-field ${f.full?'full':''}"><label>${f.label}${f.required?' *':''}</label>${fieldControl(f,val,disabled,record)}</div>`;
+  }).join('');
+  bindCombos();
+  bindPwd();
+  formModal.classList.add('open'); formMask.classList.add('open');
+}
+function closeForm(){ formModal.classList.remove('open'); formMask.classList.remove('open'); }
+
+function collectForm(){
+  const schema=FORM_SCHEMAS[formCtx.type], out={};
+  schema.fields.forEach(f=>{
+    if(f.key==='password'){
+      const el=document.querySelector('[data-key="password"]');
+      if(formCtx.record){
+        out.password=(el && el.dataset.mode==='edit' && el.value.trim()) ? el.value.trim() : formCtx.record.password;
+      } else {
+        out.password=el?el.value.trim():'';
+      }
+      return;
+    }
+    if(f.type==='checkboxes'||f.type==='combo'){
+      out[f.key]=[...document.querySelectorAll(`input[data-key="${f.key}"]:checked`)].map(i=>i.value);
+    } else {
+      const el=document.querySelector(`[data-key="${f.key}"]`);
+      out[f.key]=el?el.value:'';
+    }
+  });
+  return out;
+}
+
+function openConfirm(title, text, cb){
+  document.getElementById('confirmTitle').textContent=title;
+  document.getElementById('confirmText').innerHTML=text;
+  confirmCb=cb;
+  confirmModal.classList.add('open'); confirmMask.classList.add('open');
+}
+function closeConfirm(){ confirmModal.classList.remove('open'); confirmMask.classList.remove('open'); confirmCb=null; }
+
+function findRecord(type,key){
+  if(type==='style') return styles.find(x=>x.no===key);
+  if(type==='material') return materials.find(x=>x.code===key);
+  if(type==='sample') return samples.find(x=>x.code===key);
+  if(type==='user') return users.find(x=>x.account===key);
+  if(type==='supplier') return suppliers.find(x=>x.code===key);
+}
+
+function calcProgress(s){
+  const all=[...s.rd,...s.ds,...s.pd];
+  const score=all.reduce((a,x)=>a+(x==='done'?1:x==='doing'?0.5:0),0);
+  return Math.round(score/all.length*100);
+}
+function bumpVersion(v){
+  const m=/V?(\d+)\.(\d+)/.exec(String(v||'V1.0'));
+  if(!m) return 'V1.1';
+  return `V${m[1]}.${Number(m[2])+1}`;
+}
+function emptyStyle(no){
+  return { no, name:'', batch:'', qty:'', supplier:'待定', owner:'', designer:'', due:'', progress:0,
+    stage:'rd', status:'doing', statusText:'进行中', cost:'待核价', review:'未提交评审', version:'V1.0', po:'—',
+    rd:['todo','todo','todo','todo','todo','todo'], ds:['todo','todo','todo','todo','todo'], pd:['todo','todo','todo','todo','todo','todo','todo','todo'],
+    dates:{ rd:[], ds:[], pd:[] } };
+}
+
+function refreshSupplierOptions(){
+  const cur=fSupplier.value;
+  [...new Set(styles.map(s=>s.supplier))].forEach(s=>{
+    if(!fSupplier.querySelector(`option[value="${s}"]`)){ const o=document.createElement('option'); o.value=s; o.textContent=s; fSupplier.appendChild(o); }
+  });
+  fSupplier.value=cur;
+}
+function refreshAllStyles(){ refreshSupplierOptions(); renderOverview(); renderRd(); renderDs(); renderPd(); renderReport(); renderMat(); renderSample(); }
+
+/* ---- 款式 ---- */
+function upsertStyle(data){
+  const qtyNum=String(data.qty||'').trim();
+  const costNum=String(data.cost||'').trim();
+  const payload={
+    name:data.name, batch:data.batch,
+    qty:qtyNum?`${qtyNum} 件`:(formCtx.record?formCtx.record.qty:''),
+    supplier:data.supplier, owner:data.owner, designer:data.designer,
+    due:data.due,
+    cost:costNum?`¥${costNum}`:(formCtx.record?formCtx.record.cost:''),
+    stage:data.stage, status:data.status
+  };
+  if(formCtx.record){
+    const s=styles.find(x=>x.no===formCtx.record.no);
+    Object.assign(s, payload, {statusText:STATUS_TEXT[data.status]||s.statusText, version:bumpVersion(s.version)});
+    s.progress=calcProgress(s);
+  } else {
+    const no=data.no||('ST-'+String(Date.now()).slice(-5));
+    const ns=emptyStyle(no);
+    Object.assign(ns, payload, {no, statusText:STATUS_TEXT[data.status], version:'V1.0'});
+    ns.progress=calcProgress(ns);
+    styles.push(ns);
+  }
+  refreshAllStyles();
+  if(currentDrawerNo && drawer.classList.contains('open')) openDrawer(currentDrawerNo);
+}
+function removeStyle(no){
+  openConfirm('删除款式', `确认删除款式 <b>${no}</b> 吗？关联的物料、样衣记录将保留，但款号引用会变为悬空。`, ()=>{
+    const i=styles.findIndex(x=>x.no===no); if(i>=0) styles.splice(i,1);
+    refreshAllStyles();
+  });
+}
+
+/* ---- 面辅料 ---- */
+function upsertMaterial(data){
+  if(formCtx.record){ const m=materials.find(x=>x.code===formCtx.record.code); Object.assign(m,data); }
+  else materials.push(data);
+  renderMat();
+}
+function removeMaterial(code){
+  openConfirm('删除物料', `确认删除物料 <b>${code}</b> 吗？`, ()=>{
+    const i=materials.findIndex(x=>x.code===code); if(i>=0) materials.splice(i,1); renderMat();
+  });
+}
+
+/* ---- 样衣 ---- */
+function upsertSample(data){
+  if(formCtx.record){ const s=samples.find(x=>x.code===formCtx.record.code); Object.assign(s,data); }
+  else samples.push(data);
+  renderSample();
+}
+function removeSample(code){
+  openConfirm('删除样衣', `确认删除样衣 <b>${code}</b> 吗？`, ()=>{
+    const i=samples.findIndex(x=>x.code===code); if(i>=0) samples.splice(i,1); renderSample();
+  });
+}
+function toggleSample(code){
+  const s=samples.find(x=>x.code===code); if(!s) return;
+  s.status = s.status==='借出'?'在库':'借出'; renderSample();
+}
+
+/* ---- 用户 ---- */
+function upsertUser(data){
+  if(formCtx.record){ const u=users.find(x=>x.account===formCtx.record.account); Object.assign(u,data); }
+  else users.push(data);
+  renderUsers();
+}
+function removeUser(account){
+  openConfirm('删除用户', `确认删除账号 <b>${account}</b> 吗？`, ()=>{
+    const i=users.findIndex(x=>x.account===account); if(i>=0) users.splice(i,1); renderUsers();
+  });
+}
+function toggleUser(account){
+  const u=users.find(x=>x.account===account); if(!u) return;
+  u.status = u.status==='启用'?'禁用':'启用'; renderUsers();
+}
+/* ---- 供应商 ---- */
+function renderSupplier(){
+  const kw=document.getElementById('supKw').value.trim().toLowerCase();
+  const cat=document.getElementById('supCat').value, st=document.getElementById('supStatus').value;
+  const list=suppliers.filter(s=>{
+    if(s.name==='待定') return false;
+    const hit=!kw||[s.code,s.name,s.contact,s.region,s.cat].some(x=>x.toLowerCase().includes(kw));
+    return hit && (cat==='all'||s.cat===cat) && (st==='all'||s.status===st);
+  });
+  document.getElementById('supCount').textContent=`共 ${list.length} 家`;
+  document.getElementById('supTbody').innerHTML=list.map(s=>`
+    <tr>
+      <td><div class="style-no">${s.code}</div></td>
+      <td>${s.name}</td><td>${s.cat}</td><td>${s.contact}</td><td>${s.phone}</td><td>${s.region}</td>
+      <td>${tag(s.status==='合作中'?'done':s.status==='待开发'?'todo':'block',s.status)}</td>
+      <td>${s.remark||'—'}</td>
+      <td><div class="op-btns"><button class="btn" data-action="edit" data-type="supplier" data-key="${s.code}">编辑</button><button class="btn danger" data-action="del" data-type="supplier" data-key="${s.code}">删除</button></div></td>
+    </tr>`).join('') || `<tr><td colspan="9"><div class="empty">暂无供应商记录</div></td></tr>`;
+}
+function upsertSupplier(data){
+  if(formCtx.record){ const s=suppliers.find(x=>x.code===formCtx.record.code); Object.assign(s,data); }
+  else suppliers.push(data);
+  renderSupplier();
+}
+function removeSupplier(code){
+  openConfirm('删除供应商', `确认删除供应商 <b>${code}</b> 吗？已关联款式不会自动解除。`, ()=>{
+    const i=suppliers.findIndex(x=>x.code===code); if(i>=0) suppliers.splice(i,1); renderSupplier();
+  });
+}
+
+/* ---- 弹窗事件 ---- */
+document.getElementById('formClose').addEventListener('click',closeForm);
+document.getElementById('formCancel').addEventListener('click',closeForm);
+formMask.addEventListener('click',closeForm);
+document.getElementById('formSave').addEventListener('click',()=>{
+  const data=collectForm(), schema=FORM_SCHEMAS[formCtx.type];
+  for(const f of schema.fields){
+    const err=validateField(f,data[f.key]);
+    if(err){ alert(err); return; }
+  }
+  if(formCtx.type==='style') upsertStyle(data);
+  else if(formCtx.type==='material') upsertMaterial(data);
+  else if(formCtx.type==='sample') upsertSample(data);
+  else if(formCtx.type==='user') upsertUser(data);
+  else if(formCtx.type==='supplier') upsertSupplier(data);
+  closeForm();
+});
+document.getElementById('confirmNo').addEventListener('click',closeConfirm);
+document.getElementById('confirmYes').addEventListener('click',()=>{ if(confirmCb) confirmCb(); closeConfirm(); });
+confirmMask.addEventListener('click',closeConfirm);
+
+/* ---- 环节节点编辑 ---- */
+document.getElementById('nodeClose').addEventListener('click',closeNode);
+document.getElementById('nodeCancel').addEventListener('click',closeNode);
+nodeMask.addEventListener('click',closeNode);
+document.getElementById('nodeSave').addEventListener('click',()=>{
+  const st=document.getElementById('nodeStatus').value;
+  const dt=document.getElementById('nodeDate').value;
+  if(st==='done' && !dt){ alert('状态为「已完成」时必须选择完成日期'); return; }
+  const {style:s, group:g, index:i}=nodeCtx;
+  s[g][i]=st;
+  if(!s.dates) s.dates={rd:[],ds:[],pd:[]};
+  if(!s.dates[g]) s.dates[g]=[];
+  s.dates[g][i]=(st==='done')?dt:'';
+  s.progress=calcProgress(s);
+  closeNode();
+  refreshAllStyles();
+  if(currentDrawerNo) openDrawer(currentDrawerNo);
+});
+
+/* ---- 顶部新增 / 抽屉编辑 ---- */
+document.getElementById('btnNewStyle').addEventListener('click',()=>openForm('style',null));
+document.getElementById('btnNewMaterial').addEventListener('click',()=>openForm('material',null));
+document.getElementById('btnNewSample').addEventListener('click',()=>openForm('sample',null));
+document.getElementById('btnNewUser').addEventListener('click',()=>openForm('user',null));
+document.getElementById('btnNewSupplier').addEventListener('click',()=>openForm('supplier',null));
+document.getElementById('btnEditStyle').addEventListener('click',()=>{
+  if(currentDrawerNo) openForm('style', styles.find(x=>x.no===currentDrawerNo));
+});
+
+/* ---- 操作按钮统一委托 ---- */
+document.body.addEventListener('click',e=>{
+  const btn=e.target.closest('[data-action]'); if(!btn) return;
+  e.stopPropagation();
+  const {action,type,key}=btn.dataset;
+  if(action==='edit') openForm(type, findRecord(type,key));
+  else if(action==='del'){
+    if(type==='style') removeStyle(key);
+    else if(type==='material') removeMaterial(key);
+    else if(type==='sample') removeSample(key);
+    else if(type==='user') removeUser(key);
+    else if(type==='supplier') removeSupplier(key);
+  }
+  else if(action==='toggle-sample') toggleSample(key);
+  else if(action==='toggle-user') toggleUser(key);
+});
+
+/* ============ 导航切换 + 权限显隐 ============ */
+function switchView(v){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.view===v));
+  Object.keys(PAGE_NAMES).forEach(k=>{ const el=document.getElementById('view-'+k); if(el) el.hidden=(k!==v); });
+  document.getElementById('pageTitle').textContent=PAGE_NAMES[v]||'';
+}
+function applyRole(){
+  const cfg=roleConfig[currentRole];
+  document.querySelectorAll('.nav-item').forEach(item=>{
+    item.style.display = cfg.pages.includes(item.dataset.view)?'flex':'none';
+  });
+  document.getElementById('topAvatar').textContent=cfg.avatar;
+  const active=document.querySelector('.nav-item.active');
+  const cur=active?active.dataset.view:cfg.pages[0];
+  if(!cfg.pages.includes(cur)) switchView(cfg.pages[0]);
+}
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click',()=>{
+    const v=item.dataset.view;
+    if(!roleConfig[currentRole].pages.includes(v)) return;
+    switchView(v);
+  });
+});
+const roleSel=document.getElementById('roleSelect');
+const onRoleChange=e=>{ currentRole=e.target.value; applyRole(); };
+roleSel.addEventListener('change',onRoleChange);
+roleSel.addEventListener('input',onRoleChange);
+
+/* ============ 登录校验（原型内存态，正式环境以后端鉴权为准） ============ */
+let currentUser=null;
+function enterApp(){
+  document.getElementById('loginPage').style.display='none';
+  document.getElementById('appRoot').style.display='flex';
+}
+function doLogin(){
+  const acc=document.getElementById('loginAccount').value.trim();
+  const pwd=document.getElementById('loginPassword').value;
+  const err=document.getElementById('loginError');
+  const u=users.find(x=>x.account===acc);
+  if(!u || u.password!==pwd){ err.textContent='账号或密码错误，请重试'; return; }
+  if(u.status!=='启用'){ err.textContent='该账号已禁用，请联系管理员'; return; }
+  err.textContent='';
+  currentUser=u; currentRole=u.role;
+  document.getElementById('roleSelect').value=u.role;
+  applyRole();
+  refreshUserMenu();
+  enterApp();
+}
+function logout(){
+  currentUser=null;
+  document.getElementById('userMenu').hidden=true;
+  document.getElementById('appRoot').style.display='none';
+  document.getElementById('loginPage').style.display='flex';
+  document.getElementById('loginPassword').value='';
+  document.getElementById('loginError').textContent='';
+}
+function refreshUserMenu(){
+  if(!currentUser) return;
+  const cfg=roleConfig[currentUser.role];
+  document.getElementById('topAvatar').textContent=cfg.avatar;
+  document.getElementById('umAvatar').textContent=cfg.avatar;
+  document.getElementById('umName').textContent=currentUser.name;
+  document.getElementById('umAccount').textContent='账号：'+currentUser.account;
+  document.getElementById('umRole').innerHTML='角色：<b>'+cfg.name+'</b>';
+  document.getElementById('umScope').innerHTML='数据范围：<b>'+cfg.scope+'</b>';
+}
+const userWrap=document.getElementById('userWrap'), userMenu=document.getElementById('userMenu');
+document.getElementById('topAvatar').addEventListener('click',e=>{
+  e.stopPropagation();
+  userMenu.hidden=!userMenu.hidden;
+});
+document.addEventListener('click',e=>{ if(!e.target.closest('#userWrap')) userMenu.hidden=true; });
+document.getElementById('btnLogout').addEventListener('click',logout);
+
+document.getElementById('btnLogin').addEventListener('click',doLogin);
+document.getElementById('loginPassword').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+document.getElementById('loginAccount').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); });
+
+styles.forEach(s=>s.progress=calcProgress(s));
+renderOverview(); renderRd(); renderDs(); renderPd(); renderReport(); renderUsers(); renderRoles(); renderMat(); renderSample(); renderSupplier(); applyRole();
+</script>
+</body>
+</html>
